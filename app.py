@@ -1,75 +1,130 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import time
 
-# ---------------- Page Config ----------------
-st.set_page_config(page_title="Solar AI Optimization", layout="wide")
+# Page title etc.
+st.title("Solar & Optimization Analytics")
+st.write("AI-driven energy insights and actionable recommendations")
 
-st.title("⚡ AI Optimization Recommendations")
-st.write("Actionable insights for energy savings and operational efficiency.")
+# Last updated timestamp
+st.caption(f"Last updated: {pd.Timestamp.now().strftime('%B %d, %Y at %I:%M %p')}")
 
-# ---------------- Fake Data (replace with real later) ----------------
-days = pd.date_range(start="2025-09-01", periods=15, freq="D")
-energy = np.random.randint(5, 20, size=15)
-water = np.random.randint(100, 300, size=15)
+# --- Metrics row ---
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("kWh Today", "1,024", "+12%")
+m2.metric("kWh Used", "780", "-5%")
+m3.metric("Credits This Month", "142", "+20%")
+m4.metric("Savings This Month", "$2,350", "+18%")
 
-df = pd.DataFrame({
+st.divider()
+
+# --- Filters and Export / Refresh Buttons ---
+f1, f2, f3 = st.columns([2,2,1])
+with f1:
+    time_period = st.selectbox("Time Period", ["Last 7 Days", "Last 30 Days", "Year to Date"])
+with f2:
+    chart_type = st.selectbox("Chart Type", ["Line Chart", "Area Chart", "Bar Chart"])
+with f3:
+    if st.button("🔁 Refresh Data"):
+        st.success("Data refreshed!")
+    st.download_button("⬇ Export Data", data="dummy_data", file_name="solar_data.csv")
+
+st.divider()
+
+# --- Graphs ---
+# Sample data generation
+days = pd.date_range(end=pd.Timestamp.now(), periods=14)
+solar_gen = np.random.randint(200, 500, size=14)
+grid_use = np.random.randint(100, 300, size=14)
+pump_eff = np.random.uniform(70, 95, size=14)
+
+df1 = pd.DataFrame({
     "Date": days,
-    "Energy (kWh)": energy,
-    "Water (Liters)": water
+    "Solar Generation": solar_gen,
+    "Grid Consumption": grid_use
 }).set_index("Date")
 
-# ---------------- Layout ----------------
-col1, col2 = st.columns(2)
+df2 = pd.DataFrame({
+    "Date": days,
+    "Pump A-1": pump_eff,
+    "Pump B-2": pump_eff - 5,
+    "Pump C-3": pump_eff - 10
+}).set_index("Date")
 
-with col1:
-    st.subheader("🔥 High Priority")
-    if st.button("🚨 Optimize Pump C-3 Schedule ($847/month)"):
-        st.success("✅ Pump C-3 schedule optimization applied. Will take effect at 11 PM.")
-    if st.button("🔶 Increase Solar Panel Angle (15% Efficiency)"):
-        st.success("✅ Solar angle adjusted to 32° for autumn season.")
+st.subheader("Solar Output vs Grid Consumption")
+if chart_type == "Line Chart":
+    st.line_chart(df1)
+elif chart_type == "Area Chart":
+    st.area_chart(df1)
+else:
+    st.bar_chart(df1)
 
-with col2:
-    st.subheader("⚖️ Medium / Low Priority")
-    if st.button("🔋 Battery Storage Optimization ($425/month)"):
-        st.success("✅ Battery storage schedule implemented.")
-    if st.button("🌱 Carbon Credit Maximization (+45 credits)"):
-        st.success("✅ Carbon monitoring activated.")
-
-st.divider()
-
-# ---------------- Implementation Tracking ----------------
-st.subheader("📈 Implementation Tracking")
-implemented = np.random.randint(5, 12)
-st.progress(implemented / 12)
-st.write(f"Recommendations Implemented: {implemented}/12")
-st.metric("Total Savings", "$2,847/month")
-st.metric("ROI", "247%")
+st.subheader("Pump Efficiency Trends")
+st.line_chart(df2)
 
 st.divider()
 
-# ---------------- Graphs ----------------
-st.subheader("📊 Energy & Water Trends")
+# --- Recommendations with Action Buttons ---
+st.subheader("AI Recommendations")
 
-tab1, tab2, tab3 = st.tabs(["Energy Trend", "Water Usage", "Comparison"])
+# maintain state to show implemented or not
+if "impl" not in st.session_state:
+    st.session_state.impl = {
+        "opt_pump": False,
+        "angle": False,
+        "battery": False,
+        "carbon": False
+    }
 
-with tab1:
-    st.line_chart(df["Energy (kWh)"], height=300)
+# High Priority items
+hp1, hp2 = st.columns(2)
+with hp1:
+    st.markdown("**Optimize Pump C-3 Schedule**  \nPotential savings: $847/month", unsafe_allow_html=True)
+    if not st.session_state.impl["opt_pump"]:
+        if st.button("Implement Pump C-3"):
+            st.session_state.impl["opt_pump"] = True
+            st.success("✅ Pump C-3 schedule optimization implemented.")
+    else:
+        st.info("✅ Pump C-3 optimization already implemented")
 
-with tab2:
-    st.area_chart(df["Water (Liters)"], height=300)
+with hp2:
+    st.markdown("**Increase Solar Panel Angle**  \nExpected gain: 15% efficiency", unsafe_allow_html=True)
+    if not st.session_state.impl["angle"]:
+        if st.button("Implement Angle Change"):
+            st.session_state.impl["angle"] = True
+            st.success("✅ Solar panel angle changed to optimal position.")
+    else:
+        st.info("✅ Solar panel angle already optimal")
 
-with tab3:
-    st.bar_chart(df, height=300)
+# Medium Priority
+mp1, mp2 = st.columns(2)
+with mp1:
+    st.markdown("**Battery Storage Optimization**  \nPotential savings: $425/month", unsafe_allow_html=True)
+    if not st.session_state.impl["battery"]:
+        if st.button("Implement Battery Optimization"):
+            st.session_state.impl["battery"] = True
+            st.success("✅ Battery storage optimization applied.")
+    else:
+        st.info("✅ Battery optimization already done")
+with mp2:
+    st.markdown("**Carbon Credit Maximization**  \nAdditional credits: 45/month", unsafe_allow_html=True)
+    if not st.session_state.impl["carbon"]:
+        if st.button("Implement Carbon Credits"):
+            st.session_state.impl["carbon"] = True
+            st.success("✅ Carbon credits program enabled.")
+    else:
+        st.info("✅ Carbon credit program already enabled")
 
 st.divider()
 
-# ---------------- Billing Simulation ----------------
-st.subheader("💰 Billing & Carbon Credits")
-unit_rate = 5  # ₹ per kWh
-billing = df["Energy (kWh)"].sum() * unit_rate
-carbon_saving = df["Energy (kWh)"].sum() * 0.8
+# --- Implementation Tracking ---
+st.subheader("Implementation Tracking")
+total = len(st.session_state.impl)
+done = sum(1 for v in st.session_state.impl.values() if v)
+st.progress(done / total)
+st.write(f"Recommendations Implemented: {done}/{total}")
+# Example savings calculation
+savings = done * 500  # assume each implementation gives ~$500 saving for demo
+st.metric("Estimated Monthly Savings", f"${savings}")
+st.metric("Estimated ROI", f"{done * 10}%")  # dummy ROI
 
-st.write(f"**Estimated Bill:** ₹{billing:.2f}")
-st.write(f"**Carbon Credits Saved:** {carbon_saving:.2f} kg CO₂")
